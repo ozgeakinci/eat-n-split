@@ -27,6 +27,19 @@ const App = () => {
   // yeni yarattığımız newFriend için state
   const [friends, setFriends] = useState(initialFriends);
 
+  const [selectedFriend, setSelectedFriend] = useState(null);
+
+  const handleSelection = (friend) => {
+    setSelectedFriend((selectedFriend) =>
+      // burada select yaptığımızda close dönüşüp tekrar ilk haline dönmesi için
+      selectedFriend.id === friend.id ? "null" : friend
+    );
+    // setSelectedFriend((current) =>
+    //   current?.id === friend.id ? "null" : friend
+    // );
+    setShowAddFriend(false);
+  };
+
   // newFriend eklediğimiz fonksiyon
   const handleAddFriend = (friend) => {
     setFriends((friends) => [...friends, friend]);
@@ -42,7 +55,11 @@ const App = () => {
   return (
     <div className="app">
       <div className="sidebar">
-        <FriendsList friends={friends} />
+        <FriendsList
+          friends={friends}
+          onSelection={handleSelection}
+          selectedFriend={selectedFriend}
+        />
         {/* Burda add friend butonuna bastığımızda FormAddFriend componentini gösterir */}
         {showAddFriend && <FormAddFriend handleAddFriend={handleAddFriend} />}
         <Button onClick={handleShowFriend}>
@@ -50,27 +67,35 @@ const App = () => {
           {showAddFriend ? "Close" : "Add friend"}
         </Button>
       </div>
-      <FormSplitBill />
+      {/* Form Split seçilmezse açılmaması için null and operatörüyle kısa devre yapar ve sağ taraf çalışır */}
+      {selectedFriend && <FormSplitBill selectedFriend={selectedFriend} />}
     </div>
   );
 };
 
 export default App;
 
-const FriendsList = ({ friends }) => {
+const FriendsList = ({ friends, onSelection, selectedFriend }) => {
   return (
     <ul>
       {friends.map((friend) => (
-        <Friend friend={friend} key={friend.id}></Friend>
+        <Friend
+          friend={friend}
+          key={friend.id}
+          onSelection={onSelection}
+          selectedFriend={selectedFriend}
+        ></Friend>
       ))}
     </ul>
   );
 };
 
-const Friend = ({ friend }) => {
+const Friend = ({ friend, onSelection, selectedFriend }) => {
+  const isSelected = selectedFriend?.id === friend.id;
+
   return (
     <>
-      <li>
+      <li className={isSelected ? "selected" : ""}>
         <img src={friend.image} alt={friend.name} />
         <h3>{friend.name}</h3>
 
@@ -86,7 +111,10 @@ const Friend = ({ friend }) => {
           </p>
         )}
         {friend.balance === 0 && <p>You and {friend.name} are even</p>}
-        <Button> Select</Button>
+        <Button onClick={() => onSelection(friend)}>
+          {/* Butonun üzerindeki ifadeyi değiştirmek için */}
+          {isSelected ? "Close" : "Select"}
+        </Button>
       </li>
     </>
   );
@@ -145,10 +173,10 @@ const FormAddFriend = ({ handleAddFriend }) => {
   );
 };
 
-const FormSplitBill = () => {
+const FormSplitBill = ({ selectedFriend }) => {
   return (
     <form className="form-split-bill">
-      <h2 htmlFor="">SPLİT A BILL WİTH X</h2>
+      <h2 htmlFor="">SPLİT A BILL WİTH {selectedFriend.name}</h2>
 
       <label htmlFor="">💰 Bill value</label>
       <input type="text" />
@@ -156,13 +184,13 @@ const FormSplitBill = () => {
       <label htmlFor=""> 🙎‍♂️Your expense</label>
       <input type="text" />
 
-      <label htmlFor="">👭 X expense</label>
+      <label htmlFor="">👭 {selectedFriend.name} expense</label>
       <input type="text" />
 
       <label htmlFor="">Who is paying the bill</label>
       <select name="" id="">
         <option value="user">You</option>
-        <option value="friend">X</option>
+        <option value="friend">{selectedFriend.name}</option>
       </select>
 
       <Button>Split Bill</Button>
